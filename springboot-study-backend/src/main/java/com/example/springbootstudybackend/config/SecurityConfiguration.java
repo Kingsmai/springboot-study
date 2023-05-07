@@ -6,6 +6,7 @@ import com.example.springbootstudybackend.service.AuthorizeService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.mybatis.spring.boot.autoconfigure.MybatisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,6 +17,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.io.IOException;
 
@@ -38,12 +42,30 @@ public class SecurityConfiguration {
                 .and()
                 .logout()                               // 启用退出登录功能
                 .logoutUrl("/api/auth/logout")          // 设置退出登录的请求 URL
+                .logoutSuccessHandler(this::onAuthenticationSuccess) // 登出成功执行代码
                 .and()
                 .csrf().disable()                       // 禁用 CSRF 防护，因为在前后端分离的架构中，通常使用 token 来进行防护
+                .cors()                                 // 配置跨域
+                .configurationSource(this.corsConfigurationSource())
+                .and()
                 .exceptionHandling()                    // 配置异常处理
                 .authenticationEntryPoint(this::onAuthenticationFailure) // 设置身份验证失败后的处理方式
                 .and()
                 .build();                               // 创建 SecurityFilterChain 对象
+    }
+
+    // 配置 CORS
+    private CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration cors = new CorsConfiguration();
+        // 允许所有的跨域请求。【上线的时候，需要具体到某一个】
+        cors.addAllowedOriginPattern("*");
+        cors.setAllowCredentials(true);
+        cors.addAllowedHeader("*");
+        cors.addAllowedMethod("*");
+        cors.addExposedHeader("*");
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", cors);
+        return source;
     }
 
     @Bean
@@ -62,7 +84,13 @@ public class SecurityConfiguration {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        String json = JSON.toJSONString(RestBean.success("登陆成功"));
+        // 因为和登录共用，所以要判断是哪个操作
+        String json = "";
+        if (request.getRequestURI().contains("/login")) {
+            json = JSON.toJSONString(RestBean.success("登陆成功"));
+        } else if (request.getRequestURI().contains("/logout")) {
+            json = JSON.toJSONString(RestBean.success("退出登录成功"));
+        }
         response.getWriter().write(json);
     }
 
