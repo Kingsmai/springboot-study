@@ -19,7 +19,7 @@ const login = () => {
         post('/api/auth/login', {
             username: form.username,
             password: form.password,
-            remember: false
+            remember: form.remember
         }, (message) => {
             ElMessage.success(message);
             router.push('/index');
@@ -45,7 +45,7 @@ const login = () => {
         </div>
         <el-row style="margin-top: 5px">
             <el-col :span="12" style="text-align: start">
-                <el-checkbox v-model="form.remember" label="记住我"/>
+                <el-checkbox v-model="form.remember" label="七天免登录"/>
             </el-col>
             <el-col :span="12" style="text-align: end;">
                 <el-link>忘记密码</el-link>

@@ -17,10 +17,13 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 
 @Configuration
@@ -29,8 +32,12 @@ public class SecurityConfiguration {
     @Resource
     AuthorizeService authorizeService;
 
+    @Resource
+    DataSource dataSource;
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           PersistentTokenRepository repository) throws Exception {
         return http
                 .authorizeHttpRequests()                // 对所有 HTTP 请求进行授权认证
                 .anyRequest().authenticated()           // 表示所有的请求必须被认证
@@ -44,14 +51,30 @@ public class SecurityConfiguration {
                 .logoutUrl("/api/auth/logout")          // 设置退出登录的请求 URL
                 .logoutSuccessHandler(this::onAuthenticationSuccess) // 登出成功执行代码
                 .and()
+                .rememberMe()                           // 设置记住我
+                .rememberMeParameter("remember")        // 更改记住我参数
+                .tokenRepository(repository)            // 设置 token 仓库
+                .tokenValiditySeconds(60 * 60 * 24 * 7) // 七天内免登录
+                .and()
                 .csrf().disable()                       // 禁用 CSRF 防护，因为在前后端分离的架构中，通常使用 token 来进行防护
-                .cors()                                 // 配置跨域
-                .configurationSource(this.corsConfigurationSource())
+                .cors()                                 // 设置跨域
+                .configurationSource(this.corsConfigurationSource()) // 配置跨域
                 .and()
                 .exceptionHandling()                    // 配置异常处理
                 .authenticationEntryPoint(this::onAuthenticationFailure) // 设置身份验证失败后的处理方式
                 .and()
                 .build();                               // 创建 SecurityFilterChain 对象
+    }
+
+    @Bean
+    // 返回持久化 Token 仓库
+    public PersistentTokenRepository tokenRepository() {
+        JdbcTokenRepositoryImpl jdbcTokenRepository = new JdbcTokenRepositoryImpl();
+        // 设定数据库数据源
+        jdbcTokenRepository.setDataSource(dataSource);
+        // 首次在一个新的数据库中运行时，创建 token 表，创建好之后，改为 false
+        jdbcTokenRepository.setCreateTableOnStartup(false);
+        return jdbcTokenRepository;
     }
 
     // 配置 CORS
