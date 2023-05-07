@@ -10,7 +10,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * 作为权限校验的服务
+ * 用于认证用户身份的服务。
  */
 @Service
 public class AuthorizeService implements UserDetailsService {
@@ -24,6 +24,7 @@ public class AuthorizeService implements UserDetailsService {
             throw new UsernameNotFoundException("用户名不能为空");
         }
 
+        // 查询数据库
         Account account = mapper.findAccountByUsernameOrEmail(username);
         if (account == null) {
             throw new UsernameNotFoundException("用户名或密码错误");
