@@ -2,24 +2,29 @@ package com.example.springbootstudybackend.config;
 
 import com.alibaba.fastjson2.JSON;
 import com.example.springbootstudybackend.entity.RestBean;
-import jakarta.servlet.ServletException;
+import com.example.springbootstudybackend.service.AuthorizeService;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
+    @Resource
+    AuthorizeService authorizeService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -41,14 +46,27 @@ public class SecurityConfiguration {
                 .build();                               // 创建 SecurityFilterChain 对象
     }
 
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity security) throws Exception {
+        return security.getSharedObject(AuthenticationManagerBuilder.class)
+                .userDetailsService(authorizeService)
+                .and().build();
+    }
+
+    // 定义密码编码器
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         String json = JSON.toJSONString(RestBean.success("登陆成功"));
         response.getWriter().write(json);
     }
 
-    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         String json = JSON.toJSONString(RestBean.failure(401, exception.getMessage()));
