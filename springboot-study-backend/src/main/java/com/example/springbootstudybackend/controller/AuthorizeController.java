@@ -3,6 +3,7 @@ package com.example.springbootstudybackend.controller;
 import com.example.springbootstudybackend.entity.RestBean;
 import com.example.springbootstudybackend.service.AuthorizeService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,9 +28,11 @@ public class AuthorizeController {
      * 验证邮箱，要求用户发送一个邮箱过来
      */
     @PostMapping("/validateEmail")
-    public RestBean<String> validateEmail(@Pattern(regexp = EMAIL_REGEX) @RequestParam("email") String email) {
+    public RestBean<String> validateEmail(@Pattern(regexp = EMAIL_REGEX) @RequestParam("email") String email,
+                                          @RequestParam("username") String username,
+                                          HttpSession session) {
         // 验证邮箱
-        if (service.sendValidateEmail(email)) {
+        if (service.sendValidateEmail(email, username, session.getId())) {
             return RestBean.success("邮件已发送，请注意查收");
         } else {
             /* 一般失败有两种情况：

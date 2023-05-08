@@ -3,6 +3,7 @@ import {Lock, User, Message, EditPen} from "@element-plus/icons-vue";
 import router from "@/router";
 import {reactive, ref} from "vue";
 import {ElMessage} from "element-plus";
+import {post} from "@/net";
 
 const formRef = ref()
 
@@ -93,6 +94,18 @@ const onValidate = (prop, isValid) => {
 }
 
 // ===========================
+// 发送验证码
+// ===========================
+const validateEmail = () => {
+    post("/api/auth/validateEmail", {
+        email: form.email,
+        username: form.username
+    }, (message) => {
+        ElMessage.success(message)
+    })
+}
+
+// ===========================
 // 注册
 // ===========================
 const register = () => {
@@ -148,7 +161,8 @@ const register = () => {
                         </el-col>
                         <el-col :span="8">
                             <el-button style="width: 100%" type="primary"
-                                       :disabled="isSecurityCodeButtonDisabled">
+                                       :disabled="isSecurityCodeButtonDisabled"
+                                       @click="validateEmail">
                                 获取验证码
                             </el-button>
                         </el-col>
