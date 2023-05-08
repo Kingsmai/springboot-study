@@ -39,6 +39,7 @@ public class SecurityConfiguration {
                                            PersistentTokenRepository repository) throws Exception {
         return http
                 .authorizeHttpRequests()                // 对所有 HTTP 请求进行授权认证
+                .requestMatchers("/api/auth/**").permitAll() // 放行验证 URL
                 .anyRequest().authenticated()           // 表示所有的请求必须被认证
                 .and()
                 .formLogin()                            // 启用表单登录认证方式
