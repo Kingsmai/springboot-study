@@ -1,7 +1,7 @@
 <script setup>
 import {Lock, User, Message, EditPen} from "@element-plus/icons-vue";
 import router from "@/router";
-import {reactive} from "vue";
+import {reactive, ref} from "vue";
 
 const form = reactive({
     username: '',
@@ -10,6 +10,80 @@ const form = reactive({
     email: '',
     security_code: ''
 })
+
+// 用户名合法性验证
+const validateUsername = (rule, value, callback) => {
+    if (!/^[\u4e00-\u9fa5a-zA-Z0-9]+$/.test(value)) {
+        // 不符合：包含中文英文的用户名不能有特殊字符 正则表达式
+        callback(new Error('用户名不能包含特殊字符，只能中文 / 英文'))
+    } else {
+        // 通过
+        callback()
+    }
+}
+
+// 密码合法性校验
+const validatePassword = (rule, value, callback) => {
+    if (value.length < 8 || value.length > 16) {
+        callback(new Error('密码长度必须在 8 - 16 个字符之间'))
+    } else if (/[\u4e00-\u9fa5]+/.test(value)) {
+        callback(new Error('密码中不能包含中文'))
+    } else if (!/\d/.test(value)) {
+        callback(new Error('密码至少包含一个数字'))
+    } else if (!/[A-Z]/.test(value)) {
+        callback(new Error('密码至少包含一个大写字母'))
+    } else if (!/[!@#$%^&*]/.test(value)) {
+        callback(new Error('密码至少包含一个标点符号'))
+    } else {
+        // 通过
+        callback()
+    }
+}
+
+const validatePasswordRepeat = (rule, value, callback) => {
+    if (value !== form.password) {
+        callback(new Error('两次输入的密码不一致'))
+    } else {
+        callback()
+    }
+}
+
+const rules = {
+    username: [
+        {required: true, message: '请输入用户名', trigger: 'blur'},
+        {validator: validateUsername, trigger: ['blur', 'change']},
+        {min: 3, max: 10, message: '用户名必须在三个字到十个字以内', trigger: ['blur', 'change']}
+    ],
+    password: [
+        {required: true, message: '请输入密码', trigger: 'blur'},
+        {validator: validatePassword, trigger: ['blur', 'change']}
+    ],
+    password_repeat: [
+        {required: true, message: '请再次输入密码', trigger: 'blur'},
+        {validator: validatePasswordRepeat, trigger: ['blur', 'change']}
+    ],
+    email: [
+        {required: true, message: '请输入电子邮件', trigger: 'blur'},
+        {type: 'email', message: '请输入正确的电子邮件', trigger: ['blur', 'change']}
+    ]
+}
+
+const isFieldsValid = reactive({
+    username: false,
+    email: false
+})
+
+// 在信息不完整之前，禁用获取验证码按钮
+const isSecurityCodeButtonDisabled = ref(true);
+
+// 每次验证表单数据的时候，执行 OnValidate
+const onValidate = (prop, isValid) => {
+    if (prop === "username" || prop === "email") {
+        isFieldsValid[prop] = isValid
+    }
+    // 当 username 和 email 都为 true，更新 isSecurityCodeButtonDisabled 为 true
+    isSecurityCodeButtonDisabled.value = !(isFieldsValid.username && isFieldsValid.email);
+}
 </script>
 
 <template>
@@ -19,31 +93,47 @@ const form = reactive({
             <div style="font-size: 0.75rem; color: grey">欢迎注册我们的学习平台，请在下方填写相关信息</div>
         </div>
         <div style="margin-top: 50px">
-            <el-input type="text" placeholder="用户名"
-                      v-model="form.username"
-                      :prefix-icon="User"/>
-            <el-input type="password" placeholder="密码"
-                      v-model="form.password"
-                      style="margin-top: 10px"
-                      :prefix-icon="Lock"/>
-            <el-input type="password" placeholder="重复密码"
-                      v-model="form.password_repeat"
-                      style="margin-top: 10px"
-                      :prefix-icon="Lock"/>
-            <el-input type="email" placeholder="电子邮件地址"
-                      v-model="form.email"
-                      style="margin-top: 10px"
-                      :prefix-icon="Message"/>
-            <el-row style="margin-top: 10px" gutter="10">
-                <el-col :span="16">
-                    <el-input type="text" placeholder="请输入验证码"
-                              v-model="form.security_code"
-                              :prefix-icon="EditPen"/>
-                </el-col>
-                <el-col :span="8">
-                    <el-button style="width: 100%" type="primary">获取验证码</el-button>
-                </el-col>
-            </el-row>
+            <el-form :model="form"
+                     :rules="rules"
+                     @validate="onValidate">
+                <el-form-item prop="username">
+                    <el-input type="text" placeholder="用户名"
+                              v-model="form.username"
+                              :prefix-icon="User"/>
+                </el-form-item>
+                <el-form-item prop="password">
+                    <el-input type="password" placeholder="密码"
+                              v-model="form.password"
+                              show-password
+                              :prefix-icon="Lock"/>
+                </el-form-item>
+                <el-form-item prop="password_repeat">
+                    <el-input type="password" placeholder="重复密码"
+                              v-model="form.password_repeat"
+                              show-password
+                              :prefix-icon="Lock"/>
+                </el-form-item>
+                <el-form-item prop="email">
+                    <el-input type="email" placeholder="电子邮件地址"
+                              v-model="form.email"
+                              :prefix-icon="Message"/>
+                </el-form-item>
+                <el-form-item>
+                    <el-row :gutter=10>
+                        <el-col :span="16">
+                            <el-input type="text" placeholder="请输入验证码"
+                                      v-model="form.security_code"
+                                      :prefix-icon="EditPen"/>
+                        </el-col>
+                        <el-col :span="8">
+                            <el-button style="width: 100%" type="primary"
+                                       :disabled="isSecurityCodeButtonDisabled">
+                                获取验证码
+                            </el-button>
+                        </el-col>
+                    </el-row>
+                </el-form-item>
+            </el-form>
         </div>
         <div style="margin-top: 40px">
             <el-button style="width: 70%" type="success" plain>立即注册</el-button>
