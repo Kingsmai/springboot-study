@@ -28,9 +28,7 @@ const validateUsername = (rule, value, callback) => {
 
 // 密码合法性校验
 const validatePassword = (rule, value, callback) => {
-    if (value.length < 8 || value.length > 16) {
-        callback(new Error('密码长度必须在 8 - 16 个字符之间'))
-    } else if (/[\u4e00-\u9fa5]+/.test(value)) {
+    if (/[\u4e00-\u9fa5]+/.test(value)) {
         callback(new Error('密码中不能包含中文'))
     } else if (!/\d/.test(value)) {
         callback(new Error('密码至少包含一个数字'))
@@ -56,14 +54,16 @@ const rules = {
     username: [
         {required: true, message: '请输入用户名', trigger: 'blur'},
         {validator: validateUsername, trigger: ['blur', 'change']},
-        {min: 3, max: 10, message: '用户名必须在三个字到十个字以内', trigger: ['blur', 'change']}
+        {min: 2, max: 16, message: '用户名必须在 2 - 16 字符以内', trigger: ['blur', 'change']}
     ],
     password: [
         {required: true, message: '请输入密码', trigger: 'blur'},
+        {min: 8, max: 16, message: '密码必须在 8 - 16 字符以内', trigger: ['blur', 'change']},
         {validator: validatePassword, trigger: ['blur', 'change']}
     ],
     password_repeat: [
         {required: true, message: '请再次输入密码', trigger: 'blur'},
+        {min: 8, max: 16, message: '密码必须在 8 - 16 字符以内', trigger: ['blur', 'change']},
         {validator: validatePasswordRepeat, trigger: ['blur', 'change']}
     ],
     email: [
@@ -72,17 +72,21 @@ const rules = {
     ],
     security_code: [
         {required: true, message: '请输入获取的验证码', trigger: 'blur'},
+        {min: 6, max: 6, message: '验证码必须为 6 个字符', trigger: ['blur', 'change']},
     ]
 }
 
+// ===========================
+// 在信息不完整之前，禁用获取验证码按钮
 // ===========================
 const isFieldsValid = reactive({
     username: false,
     email: false
 })
 
-// 在信息不完整之前，禁用获取验证码按钮
 const isSecurityCodeButtonDisabled = ref(true);
+// 发送验证码冷却
+const verificationCodeCoolDown = ref(0);
 
 // 每次验证表单数据的时候，执行 OnValidate
 const onValidate = (prop, isValid) => {
@@ -96,12 +100,16 @@ const onValidate = (prop, isValid) => {
 // ===========================
 // 发送验证码
 // ===========================
-const validateEmail = () => {
-    post("/api/auth/validateEmail", {
+const getVerificationCode = () => {
+    post("/api/auth/getVerificationCode", {
         email: form.email,
         username: form.username
     }, (message) => {
         ElMessage.success(message)
+        verificationCodeCoolDown.value = 60;
+        setInterval(() => {
+            verificationCodeCoolDown.value--
+        }, 1000)
     })
 }
 
@@ -112,6 +120,15 @@ const register = () => {
     formRef.value.validate((isValid) => {
         if (isValid) {
             // 表单合法，访问后端请求
+            post("/api/auth/register", {
+                username: form.username,
+                password: form.password,
+                email: form.email,
+                verificationCode: form.security_code
+            }, (message) => {
+                ElMessage.success(message);
+                router.push("/");
+            })
         } else {
             ElMessage.warning("请完整填写表单注册内容。")
         }
@@ -131,18 +148,18 @@ const register = () => {
                      @validate="onValidate"
                      ref="formRef">
                 <el-form-item prop="username">
-                    <el-input type="text" placeholder="用户名"
+                    <el-input type="text" :maxlength="16" placeholder="用户名"
                               v-model="form.username"
                               :prefix-icon="User"/>
                 </el-form-item>
                 <el-form-item prop="password">
-                    <el-input type="password" placeholder="密码"
+                    <el-input type="password" :maxlength="16" placeholder="密码"
                               v-model="form.password"
                               show-password
                               :prefix-icon="Lock"/>
                 </el-form-item>
                 <el-form-item prop="password_repeat">
-                    <el-input type="password" placeholder="重复密码"
+                    <el-input type="password" :maxlength="16" placeholder="重复密码"
                               v-model="form.password_repeat"
                               show-password
                               :prefix-icon="Lock"/>
@@ -155,15 +172,17 @@ const register = () => {
                 <el-form-item prop="security_code">
                     <el-row :gutter=10>
                         <el-col :span="16">
-                            <el-input type="text" placeholder="请输入验证码"
+                            <el-input type="text" :maxlength="6" placeholder="请输入验证码"
                                       v-model="form.security_code"
                                       :prefix-icon="EditPen"/>
                         </el-col>
                         <el-col :span="8">
                             <el-button style="width: 100%" type="primary"
-                                       :disabled="isSecurityCodeButtonDisabled"
-                                       @click="validateEmail">
-                                获取验证码
+                                       :disabled="isSecurityCodeButtonDisabled || verificationCodeCoolDown > 0"
+                                       @click="getVerificationCode">
+                                {{
+                                verificationCodeCoolDown > 0 ? `请稍后（${verificationCodeCoolDown}秒）` : "获取验证码"
+                                }}
                             </el-button>
                         </el-col>
                     </el-row>
