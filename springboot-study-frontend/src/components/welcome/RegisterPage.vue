@@ -2,6 +2,9 @@
 import {Lock, User, Message, EditPen} from "@element-plus/icons-vue";
 import router from "@/router";
 import {reactive, ref} from "vue";
+import {ElMessage} from "element-plus";
+
+const formRef = ref()
 
 const form = reactive({
     username: '',
@@ -65,9 +68,13 @@ const rules = {
     email: [
         {required: true, message: '请输入电子邮件', trigger: 'blur'},
         {type: 'email', message: '请输入正确的电子邮件', trigger: ['blur', 'change']}
+    ],
+    security_code: [
+        {required: true, message: '请输入获取的验证码', trigger: 'blur'},
     ]
 }
 
+// ===========================
 const isFieldsValid = reactive({
     username: false,
     email: false
@@ -84,6 +91,19 @@ const onValidate = (prop, isValid) => {
     // 当 username 和 email 都为 true，更新 isSecurityCodeButtonDisabled 为 true
     isSecurityCodeButtonDisabled.value = !(isFieldsValid.username && isFieldsValid.email);
 }
+
+// ===========================
+// 注册
+// ===========================
+const register = () => {
+    formRef.value.validate((isValid) => {
+        if (isValid) {
+            // 表单合法，访问后端请求
+        } else {
+            ElMessage.warning("请完整填写表单注册内容。")
+        }
+    })
+}
 </script>
 
 <template>
@@ -95,7 +115,8 @@ const onValidate = (prop, isValid) => {
         <div style="margin-top: 50px">
             <el-form :model="form"
                      :rules="rules"
-                     @validate="onValidate">
+                     @validate="onValidate"
+                     ref="formRef">
                 <el-form-item prop="username">
                     <el-input type="text" placeholder="用户名"
                               v-model="form.username"
@@ -118,7 +139,7 @@ const onValidate = (prop, isValid) => {
                               v-model="form.email"
                               :prefix-icon="Message"/>
                 </el-form-item>
-                <el-form-item>
+                <el-form-item prop="security_code">
                     <el-row :gutter=10>
                         <el-col :span="16">
                             <el-input type="text" placeholder="请输入验证码"
@@ -136,7 +157,7 @@ const onValidate = (prop, isValid) => {
             </el-form>
         </div>
         <div style="margin-top: 40px">
-            <el-button style="width: 70%" type="success" plain>立即注册</el-button>
+            <el-button @click="register" style="width: 70%" type="success" plain>立即注册</el-button>
         </div>
         <div style="margin-top: 10px">
             <span style="color: grey; font-size: 14px; vertical-align: middle">已有账号？</span>
