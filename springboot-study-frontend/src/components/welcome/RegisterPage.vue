@@ -63,7 +63,6 @@ const rules = {
     ],
     password_repeat: [
         {required: true, message: '请再次输入密码', trigger: 'blur'},
-        {min: 8, max: 16, message: '密码必须在 8 - 16 字符以内', trigger: ['blur', 'change']},
         {validator: validatePasswordRepeat, trigger: ['blur', 'change']}
     ],
     email: [
@@ -138,63 +137,65 @@ const register = () => {
 
 <template>
     <div style="text-align: center; margin: 0 20px;">
-        <div>
-            <div style="font-size: 1.5rem; font-weight: bold">注册新用户</div>
-            <div style="font-size: 0.75rem; color: grey">欢迎注册我们的学习平台，请在下方填写相关信息</div>
-        </div>
-        <div style="margin-top: 50px">
-            <el-form :model="form"
-                     :rules="rules"
-                     @validate="onValidate"
-                     ref="formRef">
-                <el-form-item prop="username">
-                    <el-input type="text" :maxlength="16" placeholder="用户名"
-                              v-model="form.username"
-                              :prefix-icon="User"/>
-                </el-form-item>
-                <el-form-item prop="password">
-                    <el-input type="password" :maxlength="16" placeholder="密码"
-                              v-model="form.password"
-                              show-password
-                              :prefix-icon="Lock"/>
-                </el-form-item>
-                <el-form-item prop="password_repeat">
-                    <el-input type="password" :maxlength="16" placeholder="重复密码"
-                              v-model="form.password_repeat"
-                              show-password
-                              :prefix-icon="Lock"/>
-                </el-form-item>
-                <el-form-item prop="email">
-                    <el-input type="email" placeholder="电子邮件地址"
-                              v-model="form.email"
-                              :prefix-icon="Message"/>
-                </el-form-item>
-                <el-form-item prop="security_code">
-                    <el-row :gutter=10>
-                        <el-col :span="16">
-                            <el-input type="text" :maxlength="6" placeholder="请输入验证码"
-                                      v-model="form.security_code"
-                                      :prefix-icon="EditPen"/>
-                        </el-col>
-                        <el-col :span="8">
-                            <el-button style="width: 100%" type="primary"
-                                       :disabled="isSecurityCodeButtonDisabled || verificationCodeCoolDown > 0"
-                                       @click="getVerificationCode">
-                                {{
-                                verificationCodeCoolDown > 0 ? `请稍后（${verificationCodeCoolDown}秒）` : "获取验证码"
-                                }}
-                            </el-button>
-                        </el-col>
-                    </el-row>
-                </el-form-item>
-            </el-form>
-        </div>
-        <div style="margin-top: 40px">
-            <el-button @click="register" style="width: 70%" type="success" plain>立即注册</el-button>
-        </div>
-        <div style="margin-top: 10px">
-            <span style="color: grey; font-size: 14px; vertical-align: middle">已有账号？</span>
-            <el-link @click="router.push('/')" type="primary" plain>账号登录</el-link>
+        <div style="margin-top: 150px">
+            <div>
+                <div style="font-size: 1.5rem; font-weight: bold">注册新用户</div>
+                <div style="font-size: 0.75rem; color: grey">欢迎注册我们的学习平台，请在下方填写相关信息</div>
+            </div>
+            <div style="margin-top: 50px">
+                <el-form :model="form"
+                         :rules="rules"
+                         @validate="onValidate"
+                         ref="formRef">
+                    <el-form-item prop="username">
+                        <el-input type="text" :maxlength="16" placeholder="用户名"
+                                  v-model="form.username"
+                                  :prefix-icon="User"/>
+                    </el-form-item>
+                    <el-form-item prop="password">
+                        <el-input type="password" :maxlength="16" placeholder="密码"
+                                  v-model="form.password"
+                                  show-password
+                                  :prefix-icon="Lock"/>
+                    </el-form-item>
+                    <el-form-item prop="password_repeat">
+                        <el-input type="password" :maxlength="16" placeholder="重复密码"
+                                  v-model="form.password_repeat"
+                                  show-password
+                                  :prefix-icon="Lock"/>
+                    </el-form-item>
+                    <el-form-item prop="email">
+                        <el-input type="email" placeholder="电子邮件地址"
+                                  v-model="form.email"
+                                  :prefix-icon="Message"/>
+                    </el-form-item>
+                    <el-form-item prop="security_code">
+                        <el-row :gutter=10>
+                            <el-col :span="16">
+                                <el-input type="text" :maxlength="6" placeholder="请输入验证码"
+                                          v-model="form.security_code"
+                                          :prefix-icon="EditPen"/>
+                            </el-col>
+                            <el-col :span="8">
+                                <el-button style="width: 100%" type="primary"
+                                           :disabled="isSecurityCodeButtonDisabled || verificationCodeCoolDown > 0"
+                                           @click="getVerificationCode">
+                                    {{
+                                    verificationCodeCoolDown > 0 ? `请稍后（${verificationCodeCoolDown}秒）` : "获取验证码"
+                                    }}
+                                </el-button>
+                            </el-col>
+                        </el-row>
+                    </el-form-item>
+                </el-form>
+            </div>
+            <div style="margin-top: 40px">
+                <el-button @click="register" style="width: 70%" type="success" plain>立即注册</el-button>
+            </div>
+            <div style="margin-top: 10px">
+                <span style="color: grey; font-size: 14px; vertical-align: middle">已有账号？</span>
+                <el-link @click="router.push('/')" type="primary" plain>账号登录</el-link>
+            </div>
         </div>
     </div>
 </template>

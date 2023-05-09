@@ -12,7 +12,7 @@
             <div style="margin-top: 10px">在这里你可以学习如何使用 Java，如何搭建网站，并且与 Java 之父密切交流。</div>
             <div style="margin-top: 5px">在这里你可以同性交友，因为都是男的，没有学 Java 的女生。</div>
         </div>
-        <div style="width: 400px; background-color: white; display: flex; align-items: center; z-index: 1">
+        <div style="width: 400px; background-color: white; z-index: 1">
             <router-view v-slot="{ Component }">
                 <transition name="el-fade-in-linear" mode="out-in">
                     <component :is="Component"/>
