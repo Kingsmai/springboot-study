@@ -1,8 +1,13 @@
 <script setup>
 import {EditPen, Lock, Message} from "@element-plus/icons-vue";
 import {reactive, ref} from "vue";
+import {post} from "@/net";
+import {ElMessage} from "element-plus";
+import router from "@/router";
 
 const currentStep = ref(0);
+
+const formRef = ref();
 
 const form = reactive({
     email: '',
@@ -56,6 +61,9 @@ const rules = {
 };
 
 const onValidate = (prop, isValid) => {
+    if (prop === "email") {
+        isSecurityCodeButtonDisabled.value = !isValid;
+    }
 }
 
 const isSecurityCodeButtonDisabled = ref(true);
@@ -63,14 +71,46 @@ const isSecurityCodeButtonDisabled = ref(true);
 const verificationCodeCoolDown = ref(0);
 
 const getVerificationCode = () => {
+    post("/api/auth/getForgetPasswordVerificationCode", {
+        email: form.email
+    }, (message) => {
+        ElMessage.success(message)
+        verificationCodeCoolDown.value = 60;
+        setInterval(() => {
+            verificationCodeCoolDown.value--
+        }, 1000)
+    })
 }
 
 const emailVerify = () => {
-    currentStep.value = 1;
+    formRef.value.validate((isValid) => {
+        if (isValid) {
+            post("/api/auth/checkVerificationCode", {
+                email: form.email,
+                verificationCode: form.security_code
+            }, (message) => {
+                ElMessage.success(message)
+                currentStep.value = 1;
+            })
+        } else {
+            ElMessage.warning("请完整填写表单内容");
+        }
+    })
 }
 
 const resetPassword = () => {
-    currentStep.value = 2;
+    formRef.value.validate((isValid) => {
+        if (isValid) {
+            post("/api/auth/resetPassword", {
+                password: form.password
+            }, (message) => {
+                ElMessage.success(message)
+                currentStep.value = 2;
+            })
+        } else {
+            ElMessage.warning("请完整填写表单内容");
+        }
+    })
 }
 </script>
 
@@ -152,6 +192,9 @@ const resetPassword = () => {
             <div v-else-if="currentStep === 2">
                 <div style="font-size: 1.5rem; font-weight: bold">重置密码成功</div>
                 <div style="font-size: 0.75rem; color: grey">现在你可以用你的新密码登录本系统啦！</div>
+                <div style="margin-top: 40px">
+                    <el-button @click="router.push('/')" style="width: 70%">返回登录页面</el-button>
+                </div>
             </div>
         </div>
     </div>

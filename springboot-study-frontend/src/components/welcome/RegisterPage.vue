@@ -100,7 +100,7 @@ const onValidate = (prop, isValid) => {
 // 发送验证码
 // ===========================
 const getVerificationCode = () => {
-    post("/api/auth/getVerificationCode", {
+    post("/api/auth/getRegisterVerificationCode", {
         email: form.email,
         username: form.username
     }, (message) => {
