@@ -100,12 +100,12 @@ const onValidate = (prop, isValid) => {
 // 发送验证码
 // ===========================
 const getVerificationCode = () => {
+    verificationCodeCoolDown.value = 60;
     post("/api/auth/getRegisterVerificationCode", {
         email: form.email,
         username: form.username
     }, (message) => {
         ElMessage.success(message)
-        verificationCodeCoolDown.value = 60;
         setInterval(() => {
             verificationCodeCoolDown.value--
         }, 1000)

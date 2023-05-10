@@ -71,11 +71,11 @@ const isSecurityCodeButtonDisabled = ref(true);
 const verificationCodeCoolDown = ref(0);
 
 const getVerificationCode = () => {
+    verificationCodeCoolDown.value = 60;
     post("/api/auth/getForgetPasswordVerificationCode", {
         email: form.email
     }, (message) => {
         ElMessage.success(message)
-        verificationCodeCoolDown.value = 60;
         setInterval(() => {
             verificationCodeCoolDown.value--
         }, 1000)
