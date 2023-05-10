@@ -1,4 +1,4 @@
-package com.example.springbootstudybackend.entity;
+package com.example.springbootstudybackend.entity.auth;
 
 import lombok.Data;
 

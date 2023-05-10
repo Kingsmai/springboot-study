@@ -1,6 +1,6 @@
 package com.example.springbootstudybackend.service.impl;
 
-import com.example.springbootstudybackend.entity.Account;
+import com.example.springbootstudybackend.entity.auth.Account;
 import com.example.springbootstudybackend.mapper.UserMapper;
 import com.example.springbootstudybackend.service.AuthorizeService;
 import jakarta.annotation.Resource;
