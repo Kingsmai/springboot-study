@@ -79,6 +79,8 @@ const getVerificationCode = () => {
         setInterval(() => {
             verificationCodeCoolDown.value--
         }, 1000)
+    }, () => {
+        verificationCodeCoolDown.value = 0;
     })
 }
 
