@@ -88,7 +88,12 @@ public class AuthorizeServiceImpl implements AuthorizeService {
             }
         }
 
-        Account accountInfo = mapper.findAccountByEmail(email);
+        Account accountInfo = mapper.findAccountByUsernameOrEmail(username);
+        if (!hasAccount && accountInfo != null) {
+            return "此用户名已被注册，请换个用户名";
+        }
+
+        accountInfo = mapper.findAccountByEmail(email);
 
         if (hasAccount && accountInfo == null) {
             return "此邮箱未在本系统中注册";
@@ -157,6 +162,7 @@ public class AuthorizeServiceImpl implements AuthorizeService {
     @Override
     public String validateEmailAndRegister(String username, String password, String email, String verificationCode, String sessionId) {
         String key = "email:" + sessionId + ":" + email + ":false";
+
         String errorMessage = verifyVerificationCode(key, verificationCode);
         if (errorMessage != null) {
             return errorMessage;
